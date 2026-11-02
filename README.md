@@ -27,6 +27,28 @@ Potem otwórz `http://ADRES_KAMERY/` — zobaczysz nowy panel. Live: zakładka P
 | Watchdog | patch `wd.sh`: w trybie go2rtc sprawdza tylko go2rtc (h264grabber startuje on-demand) |
 | Tryb AP | `hostapd`+`udhcpd` (ARMv7/musl) + `cgi-bin/ap.sh`, patch `wd.sh` (nie walczy z AP) |
 
+## Instalacja na CZYSTĄ kartę SD (bez wcześniejszego yi-hacka)
+
+Jeśli nie masz jeszcze żadnego yi-hacka na kamerze (albo zgubiłeś/nadpisałeś
+kartę, która go miała), użyj **pełnego, samodzielnego pakietu** — zawiera
+bazowy [yi-hack-Allwinner-v2](https://github.com/roleoroleo/yi-hack-Allwinner-v2)
+(MIT, roleoroleo) + panel yi-hack-cam już zmergowane:
+
+```bash
+BASE_MODEL=y211ga BASE_VERSION=0.3.7 ./scripts/build-full-card.sh
+```
+
+Wynik w `dist/yi-hack-cam-sd-full-<WERSJA>-<MODEL>.tar.gz` — rozpakuj do
+**głównego katalogu** karty FAT32, włóż do kamerki, zasilanie. Gotowe od
+pierwszego boota (panel, AP mode, blokada chmury) — `debug.sh` i tak
+dalej doinstalowuje/aktualizuje przy każdym boocie (idempotentny), więc
+kolejne wersje overlay-a można też podmieniać przez zwykły
+[INSTALL-SD.md](docs/INSTALL-SD.md) na już postawionej karcie.
+
+**Wspierane modele:** sprawdź `BASE_MODEL`/`BASE_VERSION` wprost z listy
+[releases yi-hack-Allwinner-v2](https://github.com/roleoroleo/yi-hack-Allwinner-v2/releases)
+— skrypt wymaga tylko poprawnego URL-a `.tgz` dla Twojego modelu.
+
 Wszystko przeżywa reboot (zmiany leżą na karcie SD). Powrót: `./scripts/uninstall.sh`.
 
 ## Tryb punktu dostępowego (AP) — zakładka „Tryb AP”

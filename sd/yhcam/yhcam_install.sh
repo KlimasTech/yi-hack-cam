@@ -6,7 +6,14 @@
 # Mozna tez odpalic recznie przez SSH (scripts/install.sh robi to po scp).
 # Idempotentny: mozna uruchamiac wielokrotnie / co boot bez skutkow ubocznych.
 YI="/tmp/sd/yi-hack"
-SRC="$(cd "$(dirname "$0")" && pwd)"
+# busybox na tej kamerce NIE MA appletu 'dirname' - $(dirname "$0") wywala sie
+# cicho (log: "dirname: not found"), SRC ladowal sie na bledna sciezke (cwd
+# procesu), caly cp dalej failowal z "can't stat". Czyste rozwiniecie parametru
+# w sh (bez zewnetrznego polecenia) dziala zawsze w ash/busybox.
+case "$0" in
+  */*) SRC="${0%/*}" ;;
+  *)   SRC="." ;;
+esac
 log() { echo "[yhcam] $1"; }
 
 [ -d "$YI" ] || { log "brak $YI — najpierw zainstaluj yi-hack"; exit 1; }
