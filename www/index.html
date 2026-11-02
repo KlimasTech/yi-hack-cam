@@ -86,6 +86,7 @@ footer a{color:var(--muted)}
     <button data-t="ustaw">Ustawienia</button>
     <button data-t="opiek">Konserwacja</button>
     <button data-t="akt">Aktualizacja</button>
+    <button data-t="wifi">WiFi QR</button>
   </nav>
   <button id="theme" title="Zmień motyw">◐</button>
 </header>
@@ -140,9 +141,32 @@ footer a{color:var(--muted)}
   </div>
 </section>
 
+<section id="wifi">
+  <div class="card"><h2>WiFi z kodu QR</h2>
+    <p class="note" style="margin:0 0 8px">Pokaż kamerce kod QR WiFi
+      (<span class="hint">WIFI:T:WPA;S:nazwa;P:hasło;;</span> — generuje go np. telefon).
+      Kamera robi zdjęcie, odczytuje dane i zapisuje je do swojej pamięci.
+      Kamera musi mieć połączenie z siecią, żebyś mógł otworzyć ten panel.</p>
+    <div class="row">
+      <button class="act" id="qrscan">Skanuj z kamery</button>
+      <button class="act ghost" id="qrstop" disabled>Stop</button>
+    </div>
+    <canvas id="qrc" style="display:none"></canvas>
+    <img id="qrimg" alt="" style="display:none;max-width:100%;border-radius:10px;margin-top:10px">
+    <table><tr><td>Odczytano SSID</td><td id="qrssid">—</td></tr></table>
+    <div class="row">
+      <button class="act" id="qrsave" disabled>Zapisz WiFi w kamerce</button>
+    </div>
+    <div id="qrlog" style="color:var(--muted);font-size:.82rem;margin-top:8px"></div>
+    <p class="warn">Zapis nadpisuje partycję „conf" (backup ląduje na karcie jako
+      mtdblock7_*.bin) i kamerka sama się po nim zrestartuje z nowymi danymi.</p>
+  </div>
+</section>
+
 </main>
 <footer>Yi hack-cam · <span id="vfoot"></span> · <a id="ghlink2" style="color:var(--muted)">KlimasTech/yi-hack-cam</a></footer>
 <div id="toast"></div>
+<script src="js/jsqr.min.js"></script>
 <script>
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const G='cgi-bin/', H=location.hostname;
@@ -364,6 +388,7 @@ async function buildAll(){
   cam.forEach((g,i)=>$('#save-cam-'+i).onclick=()=>saveCam());
   sys.forEach((g,i)=>$('#save-sys-'+i).onclick=()=>saveSys());
   bindWm();
+  bindQr();
 }
 
 // ---- ZNAK WODNY (wgrywanie własnego BMP)
@@ -390,6 +415,53 @@ async function bindWm(){
     await fetch(G+'watermark.sh?action=reset');
     st.textContent='Przywrócono pusty znak. Zmiana po restarcie.';
   };
+
+  // ---- WIFI QR: skanowanie kodu QR WiFi przez kamerke
+  let qrTimer=null, qrFound=null;
+  function qrMsg(m){$('#qrlog').innerHTML+=esc(m)+'<br>'}
+  function parseWifi(s){
+    const m=/^WIFI:T:([^;]*);S:([^;]*);P:([^;]*);/.exec(s||'');
+    return m?{t:m[1],ssid:m[2],psk:m[3]}:null;
+  }
+  async function qrOnce(){
+    try{
+      const b=await fetch(G+'snapshot.sh?res=low&base64=yes').then(r=>r.text());
+      const img=new Image();
+      await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src='data:image/jpeg;base64,'+b.trim()});
+      const c=$('#qrc');c.width=img.width;c.height=img.height;
+      const ctx=c.getContext('2d',{willReadFrequently:true});
+      ctx.drawImage(img,0,0);
+      $('#qrimg').src=c.toDataURL('image/jpeg',0.8);$('#qrimg').style.display='block';
+      const d=ctx.getImageData(0,0,c.width,c.height);
+      const r=jsQR(d.data,c.width,c.height);
+      if(r&&r.data){
+        const w=parseWifi(r.data);
+        if(w){qrFound=w;$('#qrssid').textContent=w.ssid+' ('+w.t+')';
+          $('#qrsave').disabled=false;qrMsg('odczytano: '+w.ssid);qrStop();return}
+        qrMsg('QR nie jest kodem WiFi: '+esc(r.data).slice(0,60));
+      }
+    }catch(e){qrMsg('blad klatki: '+e)}
+  }
+  function qrStop(){if(qrTimer){clearInterval(qrTimer);qrTimer=null}
+    $('#qrstop').disabled=true;$('#qrscan').disabled=false}
+  function bindQr(){
+    $('#qrscan').onclick=()=>{qrFound=null;$('#qrsave').disabled=true;$('#qrssid').textContent='—';
+      $('#qrlog').innerHTML='';qrMsg('skanuje co 2 s — pokaz kod kamerce…');
+      $('#qrscan').disabled=true;$('#qrstop').disabled=false;
+      qrOnce();qrTimer=setInterval(qrOnce,2000)};
+    $('#qrstop').onclick=()=>{qrStop();qrMsg('stop')};
+    $('#qrsave').onclick=async()=>{
+      if(!qrFound)return;
+      if(!confirm('Zapisać WiFi „'+qrFound.ssid+'” w kamerce? Kamerka zrestartuje się.'))return;
+      $('#qrsave').disabled=true;qrMsg('zapisuje do partycji conf…');
+      const r=await fetch(G+'wifi_qr.sh',{method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ssid:qrFound.ssid,psk:qrFound.psk})}).catch(()=>null);
+      const j=r?await r.json().catch(()=>({error:'?'})):{error:'?'};
+      if(j.error==='false'){qrMsg('zapisano — kamerka zrestartuje się sama za chwilę. Po restarcie połącz się z nową siecią.');toast('WiFi zapisane, restart…')}
+      else{qrMsg('BŁĄD zapisu');toast('Błąd zapisu WiFi',1)}
+    };
+  }
 }
 async function saveCam(){
   const q=(o,p)=>o[p];
