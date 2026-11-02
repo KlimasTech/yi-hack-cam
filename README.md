@@ -59,6 +59,7 @@ po wyłączeniu AP. W trybie AP streaming jest więc wyłączony.
 | [docs/INSTALL.md](docs/INSTALL.md) | instalacja krok po kroku, też ręcznie bez skryptu |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | dlaczego tak to działa (go2rtc, CGI, aktualizacje z GitHuba) |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | typowe problemy i naprawy |
+| [docs/UNBRICK.md](docs/UNBRICK.md) | kamera nie wstaje po boocie — odzyskiwanie (soft + UART) |
 
 ## Instalacja z karty SD (jak yi-hack — bez SSH)
 
