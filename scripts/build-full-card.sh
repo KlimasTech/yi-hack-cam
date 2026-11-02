@@ -45,44 +45,11 @@ cp -r "$ROOT/sd/yhcam" "$WORK/card/yhcam"
 
 echo "== 3/4 pre-apply overlay NA BUDOWANĄ karte (gotowe od pierwszego boota,"
 echo "       debug.sh i tak go tez uruchomi co boot - idempotentny) =="
-YI="$WORK/card/yi-hack" sh -c '
-  YI="$1"; SRC="$2"
-  . /dev/null
-  set -e
-  mkdir -p "$YI/.yhcam-bak" "$YI/www/cgi-bin"
-  cp -f "$SRC/www/index.html" "$YI/www/index.html"
-  cp -f "$SRC/www/live.html"  "$YI/www/live.html"
-  cp -f "$SRC/www/VERSION"    "$YI/www/VERSION"
-  cp -f "$SRC/www/files.txt"  "$YI/www/files.txt"
-  cp -f "$SRC/www/cgi-bin/apply_update.sh" "$YI/www/cgi-bin/apply_update.sh"
-  cp -f "$SRC/www/cgi-bin/watermark.sh"    "$YI/www/cgi-bin/watermark.sh"
-  cp -f "$SRC/www/cgi-bin/ap.sh"           "$YI/www/cgi-bin/ap.sh"
-  mkdir -p "$YI/bin" "$YI/lib"
-  cp -f "$SRC/bin/hostapd"        "$YI/bin/hostapd"
-  cp -f "$SRC/bin/busybox-extras" "$YI/bin/busybox-extras"
-  cp -f "$SRC/lib/libnl-3.so.200"      "$YI/lib/libnl-3.so.200"
-  cp -f "$SRC/lib/libnl-genl-3.so.200" "$YI/lib/libnl-genl-3.so.200"
-  cp -f "$SRC/lib/libssl.so.1.1"       "$YI/lib/libssl.so.1.1"
-  cp -f "$SRC/lib/libcrypto.so.1.1"    "$YI/lib/libcrypto.so.1.1"
-  mkdir -p "$YI/.oldui"
-  ( cd "$YI/www" && for f in legacy.html.gz index.html.gz index.html.gz.new pages css js img onvif; do
-      [ -e "$f" ] && mv "$f" "$YI/.oldui/" 2>/dev/null
-    done
-  ) || true
-  grep -q "yi-hack-cam hook" "$YI/script/system.sh" || \
-    printf "\n# yi-hack-cam hook\nif [ -f /tmp/sd/yhcam/hook.sh ]; then\n  chmod 755 /tmp/sd/yhcam/hook.sh 2>/dev/null\n  sh /tmp/sd/yhcam/hook.sh\nfi\n" \
-      >> "$YI/script/system.sh"
-  sed -i "s/^RTSP_ALT=.*/RTSP_ALT=go2rtc/; s/^DISABLE_CLOUD=.*/DISABLE_CLOUD=yes/;
-    s/^REC_WITHOUT_CLOUD=.*/REC_WITHOUT_CLOUD=yes/; s/^MQTT=.*/MQTT=no/;
-    s/^TELNETD=.*/TELNETD=no/" "$YI/etc/system.conf"
-  grep -q "killall cloud" "$YI/etc/system.conf" || \
-    sed -i "s|^CRONTAB=.*|CRONTAB=* * * * * killall cloud 2>/dev/null; ps \\| grep -v grep \\| grep -q wd.sh \\|\\| (sh /tmp/sd/yi-hack/script/wd.sh >/dev/null 2>\\&1 \\&)|" \
-      "$YI/etc/system.conf"
-  if ! grep -q "listen: \\\\\":1984\\\\\"" "$YI/script/service.sh"; then
-    sed -i "0,/echo \"  listen: \\\\\"\\\\\"\" >> \\/tmp\\/go2rtc.yaml/s//echo \"  listen: \\\\\":1984\\\\\"\" >> \\/tmp\\/go2rtc.yaml/" \
-      "$YI/script/service.sh"
-  fi
-' _ "$WORK/card/yi-hack" "$ROOT/sd/yhcam"
+# Jedno zrodlo prawdy: wolamy PRAWDZIWY sd/yhcam/yhcam_install.sh (nie
+# duplikujemy jego logiki tutaj - duplikat kiedys driftowal i zostal
+# osobny, kruchy/zepsuty patch service.sh, ktory nigdy sie nie wykonywal
+# na zywej kamerze; zob. historia commitow "FIX go2rtc API :1984").
+YI="$WORK/card/yi-hack" sh "$ROOT/sd/yhcam/yhcam_install.sh"
 
 echo "== 4/4 pakowanie (tar --mode wymusza +x niezaleznie od Windows/MSYS) =="
 OUT="$DIST/yi-hack-cam-sd-full-${VERSION}-${BASE_MODEL}.tar.gz"

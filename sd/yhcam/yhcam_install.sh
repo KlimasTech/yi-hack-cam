@@ -5,7 +5,10 @@
 # system.conf dzialaja juz na tym samym boocie, bez recznego restartu.
 # Mozna tez odpalic recznie przez SSH (scripts/install.sh robi to po scp).
 # Idempotentny: mozna uruchamiac wielokrotnie / co boot bez skutkow ubocznych.
-YI="/tmp/sd/yi-hack"
+YI="${YI:-/tmp/sd/yi-hack}"
+# YI nadpisywalny przez env (uzywa tego scripts/build-full-card.sh przy
+# budowaniu pelnego pakietu offline - jedno zrodlo prawdy zamiast
+# duplikowania tej logiki w dwoch miejscach).
 # busybox na tej kamerce NIE MA appletu 'dirname' - $(dirname "$0") wywala sie
 # cicho (log: "dirname: not found"), SRC ladowal sie na bledna sciezke (cwd
 # procesu), caly cp dalej failowal z "can't stat". Czyste rozwiniecie parametru
