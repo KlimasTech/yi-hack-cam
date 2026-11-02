@@ -69,10 +69,20 @@ grep -q "killall cloud" "$YI/etc/system.conf" || \
   "$YI/etc/system.conf"
 
 log "patch service.sh (go2rtc API na :1984)"
-if ! grep -q 'listen: \\\":1984\\\"' "$YI/script/service.sh"; then
-  cp "$YI/script/service.sh" "$YI/.yhcam-bak/service.sh.bak"
-  sed -i '0,/echo "  listen: \\\"\\\"" >> \/tmp\/go2rtc.yaml/s//echo "  listen: \\\":1984\\\"" >> \/tmp\/go2rtc.yaml/' \
-    "$YI/script/service.sh"
+API_LINE="$(grep -n 'echo "api:" >>' "$YI/script/service.sh" | sed -n '1p' | cut -d: -f1)"
+if [ -n "$API_LINE" ]; then
+  L=$((API_LINE + 1))
+  if sed -n "${L}p" "$YI/script/service.sh" | grep -q 'listen: \\"\\"'; then
+    cp "$YI/script/service.sh" "$YI/.yhcam-bak/service.sh.bak"
+    # sed 'Nc\...' (change) zamiast dopasowania cudzyslowow regexem - te
+    # ostatnie bylo kruche (zagniezdzone \" nigdy sie nie dopasowywaly
+    # poprawnie przez wielopoziomowe escapowanie) i NIGDY faktycznie nie
+    # patchowalo pliku (potwierdzone na zywej kamerze - api zawsze puste).
+    # Sed c\ samo konsumuje jeden poziom \ w tekscie zamiany, wiec \\\"
+    # w zrodle daje \" w wyniku.
+    sed -i "${L}c\\        echo \"  listen: \\\\\":1984\\\\\"\" >> /tmp/go2rtc.yaml" \
+      "$YI/script/service.sh"
+  fi
 fi
 
 log "gotowe — uruchomione z debug.sh: dziala juz na tym boocie / reboot odswieza"
