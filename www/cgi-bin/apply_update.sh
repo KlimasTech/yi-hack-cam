@@ -18,5 +18,5 @@ case "$FILE" in
   *) json "true"; exit ;;
 esac
 
-cat > "$YI/$FILE"
+cat > "$YI/$FILE.new.$$" && mv -f "$YI/$FILE.new.$$" "$YI/$FILE"
 [ $? -eq 0 ] && json "false" || json "true"
