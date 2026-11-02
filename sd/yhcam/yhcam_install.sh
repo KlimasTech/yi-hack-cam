@@ -11,6 +11,12 @@ log() { echo "[yhcam] $1"; }
 
 [ -d "$YI" ] || { log "brak $YI — najpierw zainstaluj yi-hack"; exit 1; }
 
+log "chmod +x na binarkach/skryptach bazowego yi-hack (FAT32 nie gwarantuje +x)"
+for d in "$YI/bin" "$YI/sbin" "$YI/usr/bin" "$YI/usr/sbin" "$YI/usr/libexec" \
+         "$YI/script" "$YI/www/cgi-bin" "$YI/www/onvif"; do
+  [ -d "$d" ] && find "$d" -maxdepth 1 -type f ! -name '*.gz' -exec chmod 755 {} \; 2>/dev/null
+done
+
 log "kopia panelu na SD"
 mkdir -p "$YI/.yhcam-bak" "$YI/www/cgi-bin"
 cp -f "$SRC/www/index.html"    "$YI/www/index.html"
@@ -43,7 +49,7 @@ done
 log "hook w system.sh yi-hack"
 grep -q "yi-hack-cam hook" "$YI/script/system.sh" || {
   cp "$YI/script/system.sh" "$YI/.yhcam-bak/system.sh.bak"
-  printf '\n# yi-hack-cam hook\nif [ -x /tmp/sd/yhcam/hook.sh ]; then\n  sh /tmp/sd/yhcam/hook.sh\nfi\n' \
+  printf '\n# yi-hack-cam hook\nif [ -f /tmp/sd/yhcam/hook.sh ]; then\n  chmod 755 /tmp/sd/yhcam/hook.sh 2>/dev/null\n  sh /tmp/sd/yhcam/hook.sh\nfi\n' \
     >> "$YI/script/system.sh"
 }
 
