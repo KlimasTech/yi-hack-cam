@@ -252,6 +252,7 @@ const cam=[ // conf=camera, zapis przez camera_settings.sh
   ['c','ROTATE','Obróć obraz 180°'],
  ]},
 ];
+const wm=[{g:'Znak wodny',f:[['w','WM','Własny znak wodny']]}];
 const sys=[ // conf=system, zapis przez set_configs.sh
  {g:'Usługi',f:[
   ['c','HTTPD','Panel WWW (port 80)'],
@@ -312,6 +313,7 @@ const sys=[ // conf=system, zapis przez set_configs.sh
   ['s','EVENTS_TIME','Czas zdarzeń',[['autodetect','autodetekcja'],['local','lokalny'],['gmt','GMT']]],
   ['t','FREE_SPACE','Min. wolne miejsce SD (%) — 0 = brak limitu','text','0'],
  ]},
+ {g:'Znak wodny',f:[]},
  {g:'Statyczne IP (puste = DHCP)',f:[
   ['t','STATIC_IP','Adres IP','text',''],
   ['t','STATIC_MASK','Maska','text',''],
@@ -343,17 +345,52 @@ async function buildAll(){
       :`<input type="${type==='p'?'password':'text'}" data-k="${k}" class="wide" value="${esc(v)}">`;
     return `<label class="sel"><span class="t">${label}<span class="hint">${k}</span></span>${inp}</label>`;
   };
-  const group=(o,grp,i,conf)=>`<div class="card"><h2>${grp.g}</h2>
-    ${grp.f.map(f=>field(o,f)).join('')}
-    <div class="row"><button class="act" id="save-${conf}-${i}">Zapisz sekcję</button></div></div>`;
+  const group=(o,grp,i,conf)=>{
+    let inner;
+    if(conf==='wm') inner=`<p class="note" style="margin:0 0 8px">Wgraj BMP (najlepiej 16×16 px, 24-bit, jak fabryczne logo),
+      a kamera podmieni nim wbudowany znak YI. Zmiana po restarcie.</p>
+      <div class="row"><label class="act ghost" style="cursor:pointer">Wybierz plik BMP…
+        <input type="file" id="wmfile" accept=".bmp,image/bmp" style="display:none"></label>
+        <button class="act" id="wmup" disabled>Wgraj</button>
+        <button class="ghost" id="wmreset">Przywróć pusty</button></div>
+      <div id="wmst" style="color:var(--muted);font-size:.82rem;margin-top:8px"></div>`;
+    else inner=`${grp.f.map(f=>field(o,f)).join('')}
+      <div class="row"><button class="act" id="save-${conf}-${i}">Zapisz sekcję</button></div>`;
+    return `<div class="card"><h2>${grp.g}</h2>${inner}</div>`;};
   $('#forms').innerHTML=
     cam.map((g,i)=>group(c,g,i,'cam')).join('')+
+    wm.map((g,i)=>group(c,g,i,'wm')).join('')+
     sys.map((g,i)=>group(s,g,i,'sys')).join('');
   cam.forEach((g,i)=>$('#save-cam-'+i).onclick=()=>saveCam());
   sys.forEach((g,i)=>$('#save-sys-'+i).onclick=()=>saveSys());
-  // sekcja kamery zapisuje tylko jej pola? dla prostoty: camera zapis całości camera_settings
+  bindWm();
 }
 
+// ---- ZNAK WODNY (wgrywanie własnego BMP)
+async function bindWm(){
+  const up=$('#wmup'),st=$('#wmst'),fi=$('#wmfile');
+  if(!up)return;
+  try{
+    const j=await jget('watermark.sh?action=status');
+    st.textContent=(j.custom==='yes')?'Wgrany jest własny znak wodny.':'Brak własnego znaku (logo wyłączone pustym obrazkiem).';
+  }catch(e){st.textContent='nie mogę sprawdzić statusu'}
+  fi.onchange=()=>{up.disabled=!fi.files.length;
+    if(fi.files.length)st.textContent='wybrano: '+fi.files[0].name+' ('+fi.files[0].size+' B)'};
+  up.onclick=async()=>{
+    const f=fi.files[0];if(!f)return;up.disabled=true;st.textContent='wgrywam…';
+    const head=await f.slice(0,2).arrayBuffer().then(b=>String.fromCharCode(...new Uint8Array(b)));
+    if(head!=='BM'){st.textContent='BŁĄD: to nie jest plik BMP';up.disabled=false;return}
+    const buf=await f.arrayBuffer();
+    const r=await fetch(G+'watermark.sh?action=upload',{method:'POST',body:buf});
+    const j=await r.json().catch(()=>({error:'?'}));
+    st.textContent=(j.error==='false')?'Wgrano. Zmiana po restarcie kamery.':'BŁĄD zapisu';
+    up.disabled=false;if(j.error==='false')fi.value='';
+  };
+  $('#wmreset').onclick=async()=>{
+    await fetch(G+'watermark.sh?action=reset');
+    st.textContent='Przywrócono pusty znak. Zmiana po restarcie.';
+  };
+}
 async function saveCam(){
   const q=(o,p)=>o[p];
   const v={};
