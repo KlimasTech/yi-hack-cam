@@ -1,0 +1,8 @@
+*.sh text eol=lf
+*.py text eol=lf
+*.template text eol=lf
+*.service text eol=lf
+*.md text eol=lf
+LICENSE text eol=lf
+*.html text eol=lf
+*.txt text eol=lf

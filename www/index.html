@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yi Cam 04</title>
+<style>
+:root{
+  --bg:#f4f6f8; --card:#fff; --text:#1c2733; --muted:#61707f; --line:#e3e8ee;
+  --accent:#0c8a5f; --accent2:#0a6e4c; --danger:#c0392b; --chip:#e9f5f0;
+}
+html[data-theme=dark]{
+  --bg:#0f1419; --card:#181f27; --text:#e8edf2; --muted:#8a98a5; --line:#242e39;
+  --accent:#1fbf87; --accent2:#17a274; --danger:#e0574a; --chip:#1d2b26;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+     font:15px/1.5 system-ui,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);
+       display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+header h1{font-size:1.05rem;font-weight:600;margin:0;display:flex;align-items:center;gap:8px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--danger)}
+.dot.on{background:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+nav button{background:none;border:1px solid transparent;color:var(--muted);padding:7px 13px;
+           border-radius:8px;font:inherit;font-size:.9rem;cursor:pointer}
+nav button:hover{color:var(--text);background:var(--bg)}
+nav button[aria-selected=true]{color:var(--accent);background:var(--chip);font-weight:600}
+#theme{margin-left:4px;background:none;border:1px solid var(--line);color:var(--muted);
+       border-radius:8px;padding:6px 10px;cursor:pointer;font-size:1rem}
+main{max-width:980px;margin:0 auto;padding:18px 16px 40px}
+section{display:none}
+section.show{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+.card h2{font-size:.95rem;font-weight:600;margin:0 0 12px;color:var(--muted);
+         text-transform:uppercase;letter-spacing:.06em}
+.vid{position:relative;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:16/9}
+.vid iframe{width:100%;height:100%;border:0}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+button.act,a.act{background:var(--accent);color:#fff;border:0;border-radius:9px;padding:9px 16px;
+        font:inherit;font-size:.9rem;cursor:pointer;text-decoration:none;display:inline-block}
+button.act:hover{background:var(--accent2)}
+button.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+td{padding:7px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+td:first-child{color:var(--muted);white-space:nowrap;padding-right:16px}
+td a{color:var(--accent);word-break:break-all}
+label.sw{display:flex;align-items:center;justify-content:space-between;gap:10px;
+         padding:9px 2px;border-bottom:1px dashed var(--line);font-size:.92rem;cursor:pointer}
+label.sw:last-child{border-bottom:0}
+label.sw .t{flex:1}
+label.sw span.hint{display:block;color:var(--muted);font-size:.76rem}
+input[type=checkbox]{width:38px;height:22px;appearance:none;background:var(--line);border-radius:20px;
+  position:relative;cursor:pointer;transition:.2s;flex:none;margin:0}
+input[type=checkbox]::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;
+  border-radius:50%;background:#fff;transition:.2s}
+input[type=checkbox]:checked{background:var(--accent)}
+input[type=checkbox]:checked::after{left:19px}
+label.sel{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 2px;
+          border-bottom:1px dashed var(--line);font-size:.92rem}
+label.sel .t{flex:1}
+select,input[type=text],input[type=password],input[type=number],textarea{
+  background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;
+  padding:7px 9px;font:inherit;font-size:.9rem;max-width:100%}
+textarea{width:100%;min-height:70px;font-family:ui-monospace,Consolas,monospace;font-size:.8rem}
+.wide{width:min(320px,100%)}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--accent);color:#fff;padding:10px 18px;border-radius:10px;font-size:.9rem;
+  opacity:0;transition:.25s;z-index:9}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.bar{height:6px;border-radius:6px;background:var(--line);overflow:hidden;margin:4px 0 10px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.note{color:var(--muted);font-size:.8rem;margin:8px 0 0}
+.warn{color:var(--danger);font-size:.8rem;margin:8px 0 0}
+footer{max-width:980px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:.8rem}
+footer a{color:var(--muted)}
+@media(max-width:600px){nav{width:100%;order:3}}
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="dot" id="dot"></span> Yi Cam <span id="hname"></span></h1>
+  <nav role="tablist">
+    <button data-t="live" aria-selected="true">Podgląd</button>
+    <button data-t="stan">Stan</button>
+    <button data-t="ustaw">Ustawienia</button>
+    <button data-t="opiek">Konserwacja</button>
+    <button data-t="akt">Aktualizacja</button>
+  </nav>
+  <button id="theme" title="Zmień motyw">◐</button>
+</header>
+<main>
+
+<section id="live" class="show">
+  <div class="card">
+    <div class="vid"><iframe id="vframe" allow="autoplay; fullscreen" title="podgląd"></iframe></div>
+    <div class="row">
+      <a class="act" id="snap" download="yi-cam-snapshot.jpg">Zrób zdjęcie</a>
+      <a class="act ghost" id="g2link" target="_blank">Panel go2rtc</a>
+    </div>
+    <p class="note">Strumień WebRTC 1080p. Jeśli obraz się nie włącza, odśwież stronę —
+       enkoder budzi się dopiero przy podglądzie.</p>
+  </div>
+</section>
+
+<section id="stan">
+  <div class="card"><h2>Kamera</h2><table id="t-cam"></table></div>
+  <div class="card"><h2>Sieć</h2><table id="t-net"></table></div>
+  <div class="card"><h2>Zasoby</h2><div id="res"></div><table id="t-res"></table></div>
+</section>
+
+<section id="ustaw">
+  <div id="forms"></div>
+</section>
+
+<section id="opiek">
+  <div class="card"><h2>Konserwacja</h2>
+    <div class="row">
+      <a class="act" href="cgi-bin/save.sh">Pobierz kopię konfiguracji</a>
+      <button class="ghost" id="reboot">Restart kamery</button>
+    </div>
+    <p class="note">Aktualizacja firmware i przywracanie kopii — w zakładce <b>Aktualizacja</b>.</p>
+  </div>
+</section>
+
+<section id="akt">
+  <div class="card"><h2>Aktualizacja panelu (yi-hack-cam)</h2>
+    <table>
+      <tr><td>Wersja zainstalowana</td><td id="vloc">…</td></tr>
+      <tr><td>Wersja w GitHub</td><td id="vgh">…</td></tr>
+    </table>
+    <div class="row">
+      <button class="act" id="ucheck">Sprawdź aktualizacje</button>
+      <button class="act ghost" id="uinst" disabled>Zainstaluj z GitHub</button>
+    </div>
+    <div id="ulog" style="color:var(--muted);font-size:.82rem;margin-top:10px;font-family:ui-monospace,Consolas,monospace"></div>
+    <p class="note">Przeglądarka pobiera pliki z GitHuba (kamerka nie ma HTTPS)
+       i wysyła je na kartę SD przez skrypt <span class="hint">cgi-bin/apply_update.sh</span>.
+       Repo: <a id="ghlink" style="color:var(--accent)">KlimasTech/yi-hack-cam</a></p>
+  </div>
+</section>
+
+</main>
+<footer>Yi hack-cam · <span id="vfoot"></span> · <a id="ghlink2" style="color:var(--muted)">KlimasTech/yi-hack-cam</a></footer>
+<div id="toast"></div>
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const G='cgi-bin/', H=location.hostname;
+$('#vframe').src=`http://${H}:1984/stream.html?src=ch0_0.h264&mode=webrtc`;
+$('#g2link').href=`http://${H}:1984/`;
+$('#snap').href=G+'snapshot.sh?res=high';
+
+// motyw
+const dark=localStorage.getItem('yc-theme')?localStorage.getItem('yc-theme')==='dark'
+  :matchMedia('(prefers-color-scheme: dark)').matches;
+const setT=d=>document.documentElement.dataset.theme=d?'dark':'light';
+setT(dark);
+$('#theme').onclick=()=>{const d=document.documentElement.dataset.theme!=='dark';
+  setT(d);localStorage.setItem('yc-theme',d?'dark':'light')};
+
+// zakładki
+$$('nav button').forEach(b=>b.onclick=()=>{
+  $$('nav button').forEach(x=>x.ariaSelected=x===b);
+  $$('main section').forEach(s=>s.classList.toggle('show',s.id===b.dataset.t));
+});
+
+const toast=(m,e)=>{const t=$('#toast');t.textContent=m;t.style.background=e?'var(--danger)':'var(--accent)';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)};
+const jget=u=>fetch(G+u).then(r=>r.json());
+const REPO='KlimasTech/yi-hack-cam';
+const RAW=`https://raw.githubusercontent.com/${REPO}/master/`;
+$('#ghlink').href=`https://github.com/${REPO}`;
+$('#ghlink2').href=`https://github.com/${REPO}`;
+const ulog=m=>{const d=$('#ulog');d.innerHTML+=esc(m)+'<br>';d.scrollTop=1e9};
+
+// ---- AKTUALIZACJA
+let ghVer='';
+async function ucheck(){
+  $('#uinst').disabled=true;$('#ulog').innerHTML='';
+  const loc=(await fetch('VERSION').then(r=>r.text())).trim();
+  $('#vloc').textContent=loc;$('#vfoot').textContent='panel '+loc+' · yi-hack 0.3.7';
+  ulog('zainstalowana: '+loc);
+  try{
+    ghVer=(await fetch(RAW+'www/VERSION').then(r=>r.text())).trim();
+    $('#vgh').textContent=ghVer;
+    ulog('GitHub: '+ghVer);
+    if(ghVer&&ghVer!==loc){$('#uinst').disabled=false;ulog('dostępna aktualizacja — kliknij Zainstaluj');}
+    else{ulog(loc?'brak nowszej wersji':'ok');}
+  }catch(e){ulog('BŁĄD: brak dostępu do GitHub');$('#vgh').textContent='?'}
+}
+async function uinst(){
+  $('#uinst').disabled=true;$('#ucheck').disabled=true;
+  try{
+    const files=(await fetch(RAW+'www/files.txt').then(r=>r.text())).split('\n').map(s=>s.trim()).filter(Boolean);
+    for(const f of files){
+      ulog('pobieram '+f+' …');
+      const body=await fetch(RAW+'www/'+f).then(r=>{if(!r.ok)throw 0;return r.text()});
+      const r=await fetch(G+'apply_update.sh?file='+encodeURIComponent(f),{method:'POST',body});
+      const j=await r.json().catch(()=>({error:'?'}));
+      if(j.error&&j.error!=='false'&&j.error!==false)throw 'zapis '+f;
+      ulog('zapisano '+f);
+    }
+    ulog('gotowe — przeładowuję stronę…');
+    setTimeout(()=>location.reload(),1200);
+  }catch(e){toast('Aktualizacja nie powiodła się: '+e,1);$('#ucheck').disabled=false}
+}
+$('#ucheck').onclick=ucheck;
+$('#uinst').onclick=uinst;
+fetch('VERSION').then(r=>r.text()).then(v=>{$('#vloc').textContent=v.trim();
+  $('#vfoot').textContent='panel '+v.trim()+' · yi-hack 0.3.7'}).catch(()=>{});
+const fmtUp=s=>{s=+s;const d=~~(s/86400),h=~~(s%86400/3600),m=~~(s%3600/60);
+  return (d?d+' d ':'')+h+' h '+m+' min'};
+
+// ---- STAN
+async function stan(){
+  try{
+    const s=await jget('status.json');
+    $('#dot').classList.add('on'); $('#hname').textContent=s.hostname;
+    const rows=(t,pairs)=>$(t).innerHTML=pairs.map(([k,v])=>`<tr><td>${k}</td><td>${v??'—'}</td></tr>`).join('');
+    rows('#t-cam',[['Model','Yi 1080p Home (y21ga)'],['Firmware yi-hack',s.fw_version],
+      ['Firmware kamery',s.home_version],['Nr seryjny',s.serial_number],
+      ['Czas lokalny',s.local_time],['Uptime',fmtUp(s.uptime)]]);
+    rows('#t-net',[['Adres IP',`${s.local_ip} / ${s.netmask}`],['Brama',s.gateway],
+      ['MAC',s.mac_addr],['Wi-Fi',`${s.wlan_essid} (${~~(s.wlan_strength/70*100)}%)`],
+      ['Strumień RTSP',`<a href="rtsp://${s.local_ip}:554/ch0_0.h264">rtsp://${s.local_ip}:554/ch0_0.h264</a>`]]);
+    const mem=100-~~(s.free_memory/s.total_memory*100);
+    $('#res').innerHTML=`<div style="font-size:.85rem;color:var(--muted)">Pamięć ${mem}% · karta SD wolne ${s.free_sd}%</div>
+      <div class="bar"><i style="width:${mem}%"></i></div>`;
+    rows('#t-res',[['RAM wolny',`${(s.free_memory/1024).toFixed(1)} MB / ${(s.total_memory/1024).toFixed(0)} MB`],
+      ['Obciążenie (1/5/15 min)',s.load_avg],['Karta SD',`wolne ${s.free_sd}%`]]);
+  }catch(e){$('#dot').classList.remove('on')}
+  setTimeout(stan,15000);
+}
+stan();
+
+// ---- USTAWIENIA: schemat wszystkich pól
+const cam=[ // conf=camera, zapis przez camera_settings.sh
+ {g:'Kamera',f:[
+  ['c','SWITCH_ON','Kamera włączona','główny włącznik strumienia'],
+  ['c','SAVE_VIDEO_ON_MOTION','Nagrywaj po wykryciu ruchu','zapis MP4 na kartę SD'],
+  ['c','MOTION_DETECTION','Wykrywanie ruchu'],
+  ['s','SENSITIVITY','Czułość ruchu',[['low','niska'],['medium','średnia'],['high','wysoka']]],
+  ['c','AI_HUMAN_DETECTION','AI: ludzie'],
+  ['c','AI_VEHICLE_DETECTION','AI: pojazdy'],
+  ['c','AI_ANIMAL_DETECTION','AI: zwierzęta'],
+  ['c','FACE_DETECTION','Rozpoznawanie twarzy'],
+  ['c','MOTION_TRACKING','Śledzenie ruchu'],
+  ['c','SOUND_DETECTION','Wykrywanie dźwięku'],
+  ['s','SOUND_SENSITIVITY','Czułość dźwięku',[['30','30'],['35','35'],['40','40'],['45','45'],['50','50'],['60','60'],['70','70'],['80','80'],['90','90']]],
+  ['c','LED','Dioda LED statusu'],
+  ['c','IR','Tryb nocny (IR)'],
+  ['c','ROTATE','Obróć obraz 180°'],
+ ]},
+];
+const sys=[ // conf=system, zapis przez set_configs.sh
+ {g:'Usługi',f:[
+  ['c','HTTPD','Panel WWW (port 80)'],
+  ['c','SSHD','SSH'],
+  ['c','TELNETD','Telnet','niezalecane — zostaw wyłączone'],
+  ['c','FTPD','FTP'],
+  ['c','BUSYBOX_FTPD','FTP (busybox)'],
+  ['c','NTPD','Synchronizacja czasu (NTP)'],
+  ['c','MDNSD','mDNS (ogłaszanie w sieci)'],
+  ['c','DEBUG_LOG','Logowanie diagnostyczne'],
+  ['c','KERNEL_TUNING','Dostrajanie kernela'],
+  ['c','RTSP_STI','RTSP STI'],
+ ]},
+ {g:'Streaming',f:[
+  ['c','RTSP','Serwer RTSP'],
+  ['s','RTSP_ALT','Silnik RTSP',[['no','standardowy (rRTSPServer)'],['alternative','alternatywny'],['go2rtc','go2rtc (WebRTC/MSE)']]],
+  ['s','RTSP_STREAM','Rozdzielczość RTSP',[['high','wysoka (1080p)'],['low','niska'],['both','obie']]],
+  ['s','RTSP_AUDIO','Audio w RTSP',[['no','wyłączone'],['pcm','PCM'],['alaw','alaw'],['ulaw','ulaw'],['aac','AAC']]],
+  ['t','RTSP_PORT','Port RTSP','text','554'],
+  ['c','SPEAKER_AUDIO','Audio głośnika'],
+  ['c','TIME_OSD','Nakładka czasu (OSD)'],
+  ['c','CUSTOM_WATERMARK','Własny znak wodny'],
+ ]},
+ {g:'ONVIF',f:[
+  ['c','ONVIF','Serwer ONVIF'],
+  ['c','ONVIF_WSDD','WS-Discovery'],
+  ['s','ONVIF_PROFILE','Profil ONVIF',[['high','wysoki'],['low','niski'],['both','oba']]],
+  ['t','ONVIF_NETIF','Interfejs ONVIF','text','wlan0'],
+  ['c','ONVIF_WM_SNAPSHOT','Snapshot w znaku wodnym'],
+ ]},
+ {g:'Snapshot i timelapse',f:[
+  ['c','SNAPSHOT','Snapshot (HTTP)'],
+  ['c','SNAPSHOT_VIDEO','Snapshot wideo'],
+  ['c','SNAPSHOT_LOW','Niskie rozdzielczości snapshotu'],
+  ['c','TIMELAPSE','Timelapse'],
+  ['c','TIMELAPSE_FTP','Timelapse → FTP'],
+  ['c','TIMELAPSE_FTP_SAME_NAME','Timelapse FTP: ta sama nazwa'],
+  ['t','TIMELAPSE_DT','Timelapse: co ile s','text','60'],
+  ['t','TIMELAPSE_VDT','Timelapse wideo: co ile s','text',''],
+ ]},
+ {g:'Wysyłka FTP',f:[
+  ['c','FTP_UPLOAD','Wysyłaj nagrania na FTP'],
+  ['t','FTP_HOST','Serwer FTP','text',''],
+  ['t','FTP_DIR','Katalog docelowy','text',''],
+  ['c','FTP_DIR_TREE','Struktura katalogów'],
+  ['t','FTP_USERNAME','Użytkownik FTP','text',''],
+  ['p','FTP_PASSWORD','Hasło FTP',''],
+  ['c','FTP_FILE_DELETE_AFTER_UPLOAD','Usuń plik po wysyłce'],
+ ]},
+ {g:'Nazwa, czas i dostęp',f:[
+  ['t','HOSTNAME','Nazwa hosta','text','yi-cam-04'],
+  ['t','TIMEZONE','Strefa czasowa (np. Europe/Warsaw)','text',''],
+  ['t','NTP_SERVER','Serwer NTP','text','pool.ntp.org'],
+  ['t','USERNAME','Login panelu (puste = brak auth)','text',''],
+  ['p','PASSWORD','Hasło panelu',''],
+  ['p','SSH_PASSWORD','Hasło roota SSH (puste = brak)',''],
+  ['t','HTTPD_PORT','Port panelu WWW','text','80'],
+  ['s','EVENTS_TIME','Czas zdarzeń',[['autodetect','autodetekcja'],['local','lokalny'],['gmt','GMT']]],
+  ['t','FREE_SPACE','Min. wolne miejsce SD (%) — 0 = brak limitu','text','0'],
+ ]},
+ {g:'Statyczne IP (puste = DHCP)',f:[
+  ['t','STATIC_IP','Adres IP','text',''],
+  ['t','STATIC_MASK','Maska','text',''],
+  ['t','STATIC_GW','Brama','text',''],
+  ['t','STATIC_DNS1','DNS 1','text',''],
+  ['t','STATIC_DNS2','DNS 2','text',''],
+ ]},
+ {g:'System',f:[
+  ['c','SWAP_FILE','Plik wymiany na SD'],
+  ['s','SWAP_SWAPPINESS','Swappiness',[['0','0'],['1','1'],['5','5'],['10','10'],['15','15'],['20','20'],['25','25'],['30','30'],['35','35'],['40','40'],['45','45'],['50','50']]],
+  ['c','PROXYCHAINSNG','Proxychains-ng'],
+  ['a','CRONTAB','Własny crontab',''],
+ ]},
+];
+
+const esc=s=>String(s??'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+
+async function buildAll(){
+  const c=await jget('get_configs.sh?conf=camera');
+  const s=await jget('get_configs.sh?conf=system');
+  const val=(o,k)=>o[k]??'';
+  const field=(o,[type,k,label,opts])=>{
+    const v=val(o,k);
+    if(type==='c')return `<label class="sw"><span class="t">${label}<span class="hint">${k}</span></span>
+      <input type="checkbox" data-k="${k}" ${v==='yes'?'checked':''}></label>`;
+    if(type==='s')return `<label class="sel"><span class="t">${label}<span class="hint">${k}</span></span>
+      <select data-k="${k}">${opts.map(([ov,ol])=>`<option value="${ov}" ${v===ov?'selected':''}>${ol}</option>`).join('')}</select></label>`;
+    const inp=type==='a'?`<textarea data-k="${k}" class="mono">${esc(v)}</textarea>`
+      :`<input type="${type==='p'?'password':'text'}" data-k="${k}" class="wide" value="${esc(v)}">`;
+    return `<label class="sel"><span class="t">${label}<span class="hint">${k}</span></span>${inp}</label>`;
+  };
+  const group=(o,grp,i,conf)=>`<div class="card"><h2>${grp.g}</h2>
+    ${grp.f.map(f=>field(o,f)).join('')}
+    <div class="row"><button class="act" id="save-${conf}-${i}">Zapisz sekcję</button></div></div>`;
+  $('#forms').innerHTML=
+    cam.map((g,i)=>group(c,g,i,'cam')).join('')+
+    sys.map((g,i)=>group(s,g,i,'sys')).join('');
+  cam.forEach((g,i)=>$('#save-cam-'+i).onclick=()=>saveCam());
+  sys.forEach((g,i)=>$('#save-sys-'+i).onclick=()=>saveSys());
+  // sekcja kamery zapisuje tylko jej pola? dla prostoty: camera zapis całości camera_settings
+}
+
+async function saveCam(){
+  const q=(o,p)=>o[p];
+  const v={};
+  $$('#forms [data-k]').forEach(i=>{ if(camKeys.has(i.dataset.k)) v[i.dataset.k]=i.type==='checkbox'?(i.checked?'yes':'no'):i.value; });
+  const p={
+    save_video_on_motion:v.SAVE_VIDEO_ON_MOTION||'no', motion_detection:v.MOTION_DETECTION||'no',
+    sensitivity:v.SENSITIVITY||'low',
+    ai_human_detection:v.AI_HUMAN_DETECTION||'no', ai_vehicle_detection:v.AI_VEHICLE_DETECTION||'no',
+    ai_animal_detection:v.AI_ANIMAL_DETECTION||'no', face_detection:v.FACE_DETECTION||'no',
+    motion_tracking:v.MOTION_TRACKING||'no',
+    sound_detection:v.SOUND_DETECTION||'no', sound_sensitivity:v.SOUND_SENSITIVITY||'80',
+    led:v.LED||'no', ir:v.IR||'yes', rotate:v.ROTATE||'no',
+    switch_on:v.SWITCH_ON||'yes',
+  };
+  const qs=Object.entries(p).map(([k,x])=>k+'='+encodeURIComponent(x)).join('&');
+  const r=await fetch(G+'camera_settings.sh?'+qs);
+  const j=await r.json().catch(()=>({}));
+  toast(j&&j.error==='false'?'Zapisano ustawienia kamery':'Zapisano (sprawdź status)');
+}
+async function saveSys(){
+  const v={};
+  $$('#forms [data-k]').forEach(i=>{ if(sysKeys.has(i.dataset.k)) v[i.dataset.k]=i.type==='checkbox'?(i.checked?'yes':'no'):i.value; });
+  const r=await fetch(G+'set_configs.sh?conf=system',{method:'POST',body:JSON.stringify(v)});
+  const j=await r.json().catch(()=>({}));
+  toast(j&&j.error==='false'?'Zapisano ustawienia systemowe':'Zapisano (sprawdź status)', j&&j.error==='true');
+  if(v.HOSTNAME && v.HOSTNAME!==$('#hname').textContent) toast('Nazwa zmieni się po restarcie');
+}
+const camKeys=new Set(cam.flatMap(g=>g.f.map(f=>f[1])));
+const sysKeys=new Set(sys.flatMap(g=>g.f.map(f=>f[1])));
+buildAll();
+
+$('#reboot').onclick=async()=>{
+  if(!confirm('Na pewno zrestartować kamerę?'))return;
+  $('#reboot').disabled=true;toast('Restartuję…');
+  await fetch(G+'reboot.sh').catch(()=>{});
+  const t0=Date.now();
+  const ping=()=>fetch('index.html',{cache:'no-store'})
+    .then(()=>{toast('Kamera wróciła do sieci');$('#reboot').disabled=false})
+    .catch(()=>Date.now()-t0<120000?setTimeout(ping,5000):toast('Kamera nie odpowiada po 2 min',1));
+  setTimeout(ping,15000);
+};
+</script>
+</body>
+</html>

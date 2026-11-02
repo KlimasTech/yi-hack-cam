@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yi Cam 04 — Live</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #111; color: #eee; font-family: system-ui, sans-serif; }
+  header { display: flex; justify-content: space-between; align-items: center;
+           padding: 10px 14px; flex-wrap: wrap; gap: 8px; }
+  h1 { font-size: 1rem; font-weight: 500; color: #9ab; margin: 0; }
+  .btns { display: flex; gap: 8px; }
+  a.btn { background: #2a3; color: #fff; border: 0; border-radius: 6px;
+           padding: 8px 14px; font-size: .85rem; text-decoration: none; }
+  a.sec { background: #345; }
+  iframe { width: 100%; height: calc(100vh - 60px); border: 0; display: block; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Yi Cam 04 — podgląd na żywo (go2rtc)</h1>
+  <div class="btns">
+    <a class="btn" href="/cgi-bin/snapshot.sh?res=high" download="snapshot.jpg">Snapshot</a>
+    <a class="sec" href="/index.html">Panel kamery</a>
+    <a class="sec" href="#g2">go2rtc</a>
+  </div>
+</header>
+<iframe id="f" title="live" allow="autoplay; fullscreen"></iframe>
+<script>
+  // stream z go2rtc na tym samym hoście, porcie 1984
+  const h = location.hostname;
+  document.getElementById('f').src =
+    'http://' + h + ':1984/stream.html?src=ch0_0.h264&mode=webrtc';
+  document.querySelector('a[href="#g2"]').href = 'http://' + h + ':1984/';
+</script>
+</body>
+</html>
