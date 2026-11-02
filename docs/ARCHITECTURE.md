@@ -35,5 +35,7 @@ przeglądarka ──HTTP:80──▶ panel PL (index.html, statyczny, busybox ht
 | `www/live.html` | samodzielna strona live (osadzony go2rtc) |
 | `www/cgi-bin/apply_update.sh` | zapis plików aktualizacji na SD (biała lista) |
 | `www/VERSION`, `www/files.txt` | wersja panelu i manifest plików do aktualizacji |
-| `scripts/install.sh` | instalator (Linux/macOS/Windows+PuTTY) |
-| `scripts/uninstall.sh` | powrót do panelu yi-hack |
+| `sd/debug.sh` | hook na root karty SD — yi-hack go sam wykrywa i odpala co boot |
+| `sd/yhcam/yhcam_install.sh` | właściwy (samo)instalator, wołany z `debug.sh` lub przez SSH |
+| `scripts/install.sh` | instalator sieciowy (Linux/macOS/Windows+PuTTY) — wgrywa `sd/` i woła `yhcam_install.sh` |
+| `scripts/uninstall.sh` | woła `sd/yhcam/uninstall.sh` zdalnie — powrót do panelu yi-hack |

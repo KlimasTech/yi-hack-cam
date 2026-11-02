@@ -60,21 +60,21 @@ po wyłączeniu AP. W trybie AP streaming jest więc wyłączony.
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | dlaczego tak to działa (go2rtc, CGI, aktualizacje z GitHuba) |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | typowe problemy i naprawy |
 
-## Instalacja z karty SD (jak yi-hack)
+## Instalacja z karty SD (jak yi-hack — bez SSH)
 
 1. Sformatuj kartę SD jako FAT32 (najlepiej sformatować w kamerce).
 2. Pobierz ZIP z [Releases](https://github.com/KlimasTech/yi-hack-cam/releases)
-   i wypakuj **zawartość** do katalogu głównego karty: katalog `yhcam/`
-   (samoinstalator `yhcam-boot.sh`, patche `hook.sh`, deinstalator
+   i wypakuj **zawartość** do katalogu głównego karty: plik `debug.sh`
+   (hook, który yi-hack sam wykrywa i odpala co boot), katalog `yhcam/`
+   (samoinstalator `yhcam_install.sh`, patche `hook.sh`, deinstalator
    `uninstall.sh`, panel `www/`) oraz `README.md`, `LICENSE`, `wifi/`.
-3. Włóż kartę do kamerki, zrestartuj ją i poczekaj ~1 minutę —
-   overlay instaluje się sam przy pierwszym boocie (flaga wersji
-   w `/tmp/sd/yi-hack/.yhcam-ver`, powtórki nic nie zmieniają).
+3. Włóż kartę do kamerki i zrestartuj ją — `debug.sh` to wbudowany hook
+   yi-hack (sprawdzany przy każdym boocie w `lower_half_init.sh`),
+   żadna ręczna edycja innych plików yi-hack nie jest potrzebna.
+   Overlay instaluje się sam, zanim jeszcze ruszą usługi.
 4. Panel: `http://ADRES_KAMERKI/`.
 
-**Jednorazowo (przy pierwszym użyciu czystej karty z działającym yi-hack):**
-w `lower_half_init.sh` na karcie dopisz wiersz-hooka — szczegóły w
-[docs/INSTALL-SD.md](docs/INSTALL-SD.md).
+Szczegóły mechanizmu i aktualizacje: [docs/INSTALL-SD.md](docs/INSTALL-SD.md).
 
 ## Licencja
 

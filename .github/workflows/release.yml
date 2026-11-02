@@ -14,10 +14,12 @@ jobs:
         run: |
           PKG="yi-hack-cam-${GITHUB_REF_NAME}"
           mkdir -p "$PKG/yhcam" "$PKG/wifi"
+          cp sd/debug.sh "$PKG/debug.sh"
           cp -r sd/yhcam/* "$PKG/yhcam/"
           cp wifi/configure_wifi.sh wifi/configure_wifi.cfg "$PKG/wifi/" 2>/dev/null || true
           cp README.md LICENSE "$PKG/"
-          cd "$PKG/yhcam" && chmod +x yhcam-boot.sh hook.sh uninstall.sh 2>/dev/null; cd - >/dev/null
+          chmod +x "$PKG/debug.sh"
+          cd "$PKG/yhcam" && chmod +x yhcam_install.sh hook.sh uninstall.sh bin/* www/cgi-bin/*.sh 2>/dev/null; cd - >/dev/null
           find "$PKG" -type f -exec touch -d "2026-01-01" {} +
           zip -r -9 "$PKG.zip" "$PKG"
           echo "PKG=$PKG.zip" >> "$GITHUB_ENV"
@@ -26,5 +28,7 @@ jobs:
         with:
           files: ${{ env.PKG }}
           body: |
-            Pakiet na karte SD (FAT32): wypakuj zawartosc ZIP do katalogu glownego karty,
-            wloz do kamery, zrestartuj. Panel: http://ADRES_KAMERY/
+            Pakiet na karte SD (FAT32): wypakuj zawartosc ZIP do katalogu glownego karty
+            (plik debug.sh i katalog yhcam/ musza wyladowac w ROOT karty, nie w podkatalogu),
+            wloz do kamery, zrestartuj. yi-hack sam wykryje debug.sh i zainstaluje panel —
+            bez SSH. Panel: http://ADRES_KAMERY/
