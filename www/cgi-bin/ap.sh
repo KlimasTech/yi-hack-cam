@@ -90,6 +90,10 @@ do_stop() {
   killall busybox-extras 2>/dev/null
   sleep 1
   ifconfig wlan0 down
+  # Wyczysc stary staly adres z trybu AP (192.168.4.1) - "ifconfig down/up"
+  # sam go NIE usuwa, wiec bez tego interfejs laczy sie jako klient do
+  # prawdziwego AP, ale zostaje z poprzednim statycznym IP z trybu AP.
+  ifconfig wlan0 0.0.0.0
   ifconfig wlan0 up
   /backup/tools/wpa_supplicant -c"$WPA_CONF" -g/var/run/wpa_supplicant-global -Dnl80211 -iwlan0 -B
   sleep 1
