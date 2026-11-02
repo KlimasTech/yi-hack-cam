@@ -1,0 +1,28 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Zloz pakiet SD
+        run: |
+          PKG="yi-hack-cam-${GITHUB_REF_NAME}"
+          mkdir -p "$PKG"
+          cp -r sd/yhcam "$PKG/"
+          cp README.md LICENSE "$PKG/"
+          find "$PKG" -type f -exec touch -d "2026-01-01" {} +
+          zip -r -9 "$PKG.zip" "$PKG"
+          echo "PKG=$PKG.zip" >> "$GITHUB_ENV"
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.PKG }}
+          body: |
+            Pakiet na karte SD (FAT32): wypakuj zawartosc ZIP do katalogu glownego karty,
+            wloz do kamery, zrestartuj. Panel: http://ADRES_KAMERY/
