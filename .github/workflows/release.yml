@@ -13,9 +13,11 @@ jobs:
       - name: Zloz pakiet SD
         run: |
           PKG="yi-hack-cam-${GITHUB_REF_NAME}"
-          mkdir -p "$PKG"
-          cp -r sd/yhcam "$PKG/"
+          mkdir -p "$PKG/yhcam" "$PKG/wifi"
+          cp -r sd/yhcam/* "$PKG/yhcam/"
+          cp wifi/configure_wifi.sh wifi/configure_wifi.cfg "$PKG/wifi/" 2>/dev/null || true
           cp README.md LICENSE "$PKG/"
+          cd "$PKG/yhcam" && chmod +x yhcam-boot.sh hook.sh uninstall.sh 2>/dev/null; cd - >/dev/null
           find "$PKG" -type f -exec touch -d "2026-01-01" {} +
           zip -r -9 "$PKG.zip" "$PKG"
           echo "PKG=$PKG.zip" >> "$GITHUB_ENV"

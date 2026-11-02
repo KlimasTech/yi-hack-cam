@@ -36,10 +36,21 @@ Wszystko przeżywa reboot (zmiany leżą na karcie SD). Powrót: `./scripts/unin
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | dlaczego tak to działa (go2rtc, CGI, aktualizacje z GitHuba) |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | typowe problemy i naprawy |
 
-## Wymagania
+## Instalacja z karty SD (jak yi-hack)
 
-Kamerka Yi z [yi-hack-Allwinner(-v2)](https://github.com/roleoroleo/yi-hack-Allwinner-v2)
-na karcie SD, dostęp SSH jako root. Model przetestowany: y21ga.
+1. Sformatuj kartę SD jako FAT32 (najlepiej sformatować w kamerce).
+2. Pobierz ZIP z [Releases](https://github.com/KlimasTech/yi-hack-cam/releases)
+   i wypakuj **zawartość** do katalogu głównego karty: katalog `yhcam/`
+   (samoinstalator `yhcam-boot.sh`, patche `hook.sh`, deinstalator
+   `uninstall.sh`, panel `www/`) oraz `README.md`, `LICENSE`, `wifi/`.
+3. Włóż kartę do kamerki, zrestartuj ją i poczekaj ~1 minutę —
+   overlay instaluje się sam przy pierwszym boocie (flaga wersji
+   w `/tmp/sd/yi-hack/.yhcam-ver`, powtórki nic nie zmieniają).
+4. Panel: `http://ADRES_KAMERKI/`.
+
+**Jednorazowo (przy pierwszym użyciu czystej karty z działającym yi-hack):**
+w `lower_half_init.sh` na karcie dopisz wiersz-hooka — szczegóły w
+[docs/INSTALL-SD.md](docs/INSTALL-SD.md).
 
 ## Licencja
 
