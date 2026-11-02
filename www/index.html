@@ -276,7 +276,7 @@ const cam=[ // conf=camera, zapis przez camera_settings.sh
   ['c','ROTATE','Obróć obraz 180°'],
  ]},
 ];
-const wm=[{g:'Znak wodny',f:[['w','WM','Własny znak wodny']]}];
+const wm=[{g:'Znak wodny',f:[['w','WM','Własny znak wodny'],['c','CUSTOM_WATERMARK','Włączony (usuń znak wodny, wymaga restartu)']]}];
 const sys=[ // conf=system, zapis przez set_configs.sh
  {g:'Usługi',f:[
   ['c','HTTPD','Panel WWW (port 80)'],
@@ -373,20 +373,22 @@ async function buildAll(){
   };
   const group=(o,grp,i,conf)=>{
     let inner;
-    if(conf==='wm') inner=`<p class="note" style="margin:0 0 8px">Wgraj BMP (najlepiej 16×16 px, 24-bit, jak fabryczne logo),
+    if(conf==='wm') inner=`${grp.f.filter(f=>f[0]==='c').map(f=>field(o,f)).join('')}
+      <p class="note" style="margin:0 0 8px">Wgraj BMP (najlepiej 16×16 px, 24-bit, jak fabryczne logo),
       a kamera podmieni nim wbudowany znak YI. Zmiana po restarcie.</p>
       <div class="row"><label class="act ghost" style="cursor:pointer">Wybierz plik BMP…
         <input type="file" id="wmfile" accept=".bmp,image/bmp" style="display:none"></label>
         <button class="act" id="wmup" disabled>Wgraj</button>
         <button class="ghost" id="wmreset">Przywróć pusty</button></div>
-      <div id="wmst" style="color:var(--muted);font-size:.82rem;margin-top:8px"></div>`;
+      <div id="wmst" style="color:var(--muted);font-size:.82rem;margin-top:8px"></div>
+      <div class="row"><button class="act" id="save-wm">Zapisz znak wodny</button></div>`;
     else inner=`${grp.f.map(f=>field(o,f)).join('')}
       <div class="row"><button class="act" id="save-${conf}-${i}">Zapisz sekcję</button></div>`;
     return `<div class="card"><h2>${grp.g}</h2>${inner}</div>`;};
   $('#forms').innerHTML=
-    cam.map((g,i)=>group(c,g,i,'cam')).join('')+
-    wm.map((g,i)=>group(c,g,i,'wm')).join('')+
-    sys.map((g,i)=>group(s,g,i,'sys')).join('');
+    cam.map((g,i)=>group({cam:c,sys:c},g,i,'cam')).join('')+
+    wm.map((g,i)=>group({cam:c,sys:s},g,i,'wm')).join('')+
+    sys.map((g,i)=>group({cam:c,sys:s},g,i,'sys')).join('');
   cam.forEach((g,i)=>$('#save-cam-'+i).onclick=()=>saveCam());
   sys.forEach((g,i)=>$('#save-sys-'+i).onclick=()=>saveSys());
   bindWm();
@@ -416,6 +418,14 @@ async function bindWm(){
   $('#wmreset').onclick=async()=>{
     await fetch(G+'watermark.sh?action=reset');
     st.textContent='Przywrócono pusty znak. Zmiana po restarcie.';
+  };
+  const swm=$('#save-wm');
+  if(swm)swm.onclick=async()=>{
+    const v={};
+    v.CUSTOM_WATERMARK=document.querySelector('#forms input[data-k=CUSTOM_WATERMARK]').checked?'yes':'no';
+    const r=await fetch(G+'set_configs.sh?conf=system',{method:'POST',body:JSON.stringify(v)});
+    const j=await r.json().catch(()=>({}));
+    toast(j&&j.error==='false'?'Zapisano znak wodny':'Zapisano (sprawdź status)', j&&j.error==='true');
   };
 
   // ---- WIFI QR: skanowanie kodu QR WiFi przez kamerke
@@ -493,7 +503,7 @@ async function saveSys(){
   if(v.HOSTNAME && v.HOSTNAME!==$('#hname').textContent) toast('Nazwa zmieni się po restarcie');
 }
 const camKeys=new Set(cam.flatMap(g=>g.f.map(f=>f[1])));
-const sysKeys=new Set(sys.flatMap(g=>g.f.map(f=>f[1])));
+const sysKeys=new Set([...sys.flatMap(g=>g.f.map(f=>f[1])), 'CUSTOM_WATERMARK']);
 buildAll();
 
 $('#reboot').onclick=async()=>{
