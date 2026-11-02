@@ -298,7 +298,6 @@ const sys=[ // conf=system, zapis przez set_configs.sh
   ['t','RTSP_PORT','Port RTSP','text','554'],
   ['c','SPEAKER_AUDIO','Audio głośnika'],
   ['c','TIME_OSD','Nakładka czasu (OSD)'],
-  ['c','CUSTOM_WATERMARK','Usuń znak wodny z obrazu (wymaga restartu)'],
  ]},
  {g:'ONVIF',f:[
   ['c','ONVIF','Serwer ONVIF'],
@@ -337,7 +336,10 @@ const sys=[ // conf=system, zapis przez set_configs.sh
   ['s','EVENTS_TIME','Czas zdarzeń',[['autodetect','autodetekcja'],['local','lokalny'],['gmt','GMT']]],
   ['t','FREE_SPACE','Min. wolne miejsce SD (%) — 0 = brak limitu','text','0'],
  ]},
- {g:'Znak wodny',f:[]},
+ {g:'Znak wodny',f:[
+  ['w','WM','Własny znak wodny'],
+  ['c','CUSTOM_WATERMARK','Włączony (usuń znak wodny, wymaga restartu)'],
+ ]},
  {g:'Statyczne IP (puste = DHCP)',f:[
   ['t','STATIC_IP','Adres IP','text',''],
   ['t','STATIC_MASK','Maska','text',''],
