@@ -40,3 +40,25 @@ if ! ps | grep -v grep | grep -q wd.sh; then
   sh "$YI/script/wd.sh" >/dev/null 2>&1 &
 fi
 log "hook zakonczony"
+
+# 5. wd.sh: nie walcz z trybem AP (inaczej watchdog sam z powrotem
+# laczy wlan0 do oryginalnej sieci w kilka sekund po wlaczeniu AP)
+if ! grep -q 'yi-hack-cam: ap mode' "$YI/script/wd.sh"; then
+  log "patch wd.sh (pomijaj failsafe WiFi w trybie AP)"
+  cp "$YI/script/wd.sh" "$YI/.yhcam-bak/wd.sh.bak3"
+  awk '/^check_wifi\(\)$/{print; getline; print; \
+    print "    # yi-hack-cam: ap mode"; \
+    print "    if grep -qw \"ap\" /tmp/ap_mode.state 2>/dev/null; then"; \
+    print "        return"; print "    fi"; next}1' \
+    "$YI/script/wd.sh" > /tmp/wd2.new && mv /tmp/wd2.new "$YI/script/wd.sh"
+fi
+
+# 6. Auto-AP: jesli po ok. 60s od startu brak IP na wlan0, wlacz tryb AP YI-CAM
+(
+  sleep 40
+  IP=$(ifconfig wlan0 2>/dev/null | grep "inet addr" | grep -v "127.0.0.1")
+  if [ -z "$IP" ]; then
+    log "brak polaczenia WiFi po 60s - wlaczam tryb AP (YI-CAM)"
+    sh "$YI/www/cgi-bin/ap.sh" action=start >/dev/null 2>&1
+  fi
+) &

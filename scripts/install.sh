@@ -33,6 +33,18 @@ put "$TMP/live.html" "$WWW/live.html"
 put "$TMP/VERSION" "$WWW/VERSION"
 put "$TMP/files.txt" "$WWW/files.txt"
 put www/cgi-bin/apply_update.sh "$WWW/cgi-bin/apply_update.sh"
+put www/cgi-bin/ap.sh "$WWW/cgi-bin/ap.sh"
+rem "chmod 755 $WWW/cgi-bin/ap.sh"
+
+echo "== 1b/6 tryb AP (hostapd/udhcpd ARMv7-musl + hook.sh) =="
+put sd/yhcam/bin/hostapd "$YI/bin/hostapd"
+put sd/yhcam/bin/busybox-extras "$YI/bin/busybox-extras"
+put sd/yhcam/lib/libnl-3.so.200 "$YI/lib/libnl-3.so.200"
+put sd/yhcam/lib/libnl-genl-3.so.200 "$YI/lib/libnl-genl-3.so.200"
+put sd/yhcam/lib/libssl.so.1.1 "$YI/lib/libssl.so.1.1"
+put sd/yhcam/lib/libcrypto.so.1.1 "$YI/lib/libcrypto.so.1.1"
+put sd/yhcam/hook.sh "/tmp/sd/yhcam-hook.sh"
+rem "chmod 755 $YI/bin/hostapd $YI/bin/busybox-extras /tmp/sd/yhcam-hook.sh"
 
 echo "== 2/6 usuniecie starego menu =="
 rem "mkdir -p $YI/.oldui && cd $WWW && \

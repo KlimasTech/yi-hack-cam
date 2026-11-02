@@ -86,7 +86,7 @@ footer a{color:var(--muted)}
     <button data-t="ustaw">Ustawienia</button>
     <button data-t="opiek">Konserwacja</button>
     <button data-t="akt">Aktualizacja</button>
-    <button data-t="wifi">WiFi QR</button>
+    <button data-t="wifi">Tryb AP</button>
   </nav>
   <button id="theme" title="Zmień motyw">◐</button>
 </header>
@@ -94,13 +94,18 @@ footer a{color:var(--muted)}
 
 <section id="live" class="show">
   <div class="card">
+    <div class="row" style="margin-bottom:10px">
+      <label class="sw" style="margin:0"><span class="t">Włącz podgląd live</span>
+        <input type="checkbox" id="liveon"></label>
+    </div>
     <div class="vid"><iframe id="vframe" allow="autoplay; fullscreen" title="podgląd"></iframe></div>
     <div class="row">
       <a class="act" id="snap" download="yi-cam-snapshot.jpg">Zrób zdjęcie</a>
       <a class="act ghost" id="g2link" target="_blank">Panel go2rtc</a>
     </div>
-    <p class="note">Strumień WebRTC 1080p. Jeśli obraz się nie włącza, odśwież stronę —
-       enkoder budzi się dopiero przy podglądzie.</p>
+    <p class="note">Strumień WebRTC 1080p. Podgląd NIE startuje automatycznie —
+       kamera ma mało RAM, a enkoder (h264grabber) budzi się tylko na żądanie.
+       Włącz suwakiem, wyłącz, gdy nie patrzysz.</p>
   </div>
 </section>
 
@@ -142,37 +147,42 @@ footer a{color:var(--muted)}
 </section>
 
 <section id="wifi">
-  <div class="card"><h2>WiFi z kodu QR</h2>
-    <p class="note" style="margin:0 0 8px">Pokaż kamerce kod QR WiFi
-      (<span class="hint">WIFI:T:WPA;S:nazwa;P:hasło;;</span> — generuje go np. telefon).
-      Kamera robi zdjęcie, odczytuje dane i zapisuje je do swojej pamięci.
-      Kamera musi mieć połączenie z siecią, żebyś mógł otworzyć ten panel.</p>
+  <div class="card"><h2>Tryb punktu dostępowego (AP)</h2>
+    <p class="note" style="margin:0 0 8px">Kamera może rozgłosić własną sieć WiFi
+      <b>YI-CAM</b>, żeby połączyć się z nią bez dostępu do głównej sieci.
+      Przy starcie kamera sama włącza AP, jeśli nie połączy się z siecią w ciągu 60&nbsp;s.</p>
+    <table>
+      <tr><td>Stan</td><td id="apstate">—</td></tr>
+      <tr><td>SSID</td><td id="apssid">—</td></tr>
+      <tr><td>Hasło</td><td id="appass">—</td></tr>
+      <tr><td>Adres panelu w AP</td><td>http://192.168.4.1/</td></tr>
+    </table>
     <div class="row">
-      <button class="act" id="qrscan">Skanuj z kamery</button>
-      <button class="act ghost" id="qrstop" disabled>Stop</button>
+      <button class="act" id="apstart">Włącz tryb AP teraz</button>
+      <button class="act ghost" id="apstop" disabled>Wyłącz AP (wróć do WiFi)</button>
     </div>
-    <canvas id="qrc" style="display:none"></canvas>
-    <img id="qrimg" alt="" style="display:none;max-width:100%;border-radius:10px;margin-top:10px">
-    <table><tr><td>Odczytano SSID</td><td id="qrssid">—</td></tr></table>
-    <div class="row">
-      <button class="act" id="qrsave" disabled>Zapisz WiFi w kamerce</button>
-    </div>
-    <div id="qrlog" style="color:var(--muted);font-size:.82rem;margin-top:8px"></div>
-    <p class="warn">Zapis nadpisuje partycję „conf" (backup ląduje na karcie jako
-      mtdblock7_*.bin) i kamerka sama się po nim zrestartuje z nowymi danymi.</p>
+    <div id="aplog" style="color:var(--muted);font-size:.82rem;margin-top:8px"></div>
+    <p class="warn">Włączenie AP zrywa Wi-Fi kamery do głównej sieci — ten panel
+      przez chwilę będzie nieosiągalny pod zwykłym adresem IP, połącz się z siecią
+      YI-CAM i otwórz http://192.168.4.1/.</p>
   </div>
 </section>
 
 </main>
 <footer>Yi hack-cam · <span id="vfoot"></span> · <a id="ghlink2" style="color:var(--muted)">KlimasTech/yi-hack-cam</a></footer>
 <div id="toast"></div>
-<script src="js/jsqr.min.js"></script>
 <script>
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const G='cgi-bin/', H=location.hostname;
-$('#vframe').src=`http://${H}:1984/stream.html?src=ch0_0.h264&mode=webrtc`;
+const LIVE_URL=`http://${H}:1984/stream.html?src=ch0_0.h264&mode=webrtc`;
 $('#g2link').href=`http://${H}:1984/`;
 $('#snap').href=G+'snapshot.sh?res=high';
+// podglad live NIE startuje automatycznie (mala pamiec kamery) - suwak
+const liveChk=$('#liveon');
+liveChk.onchange=()=>{
+  if(liveChk.checked) $('#vframe').src=LIVE_URL;
+  else $('#vframe').removeAttribute('src');
+};
 
 // motyw
 const dark=localStorage.getItem('yc-theme')?localStorage.getItem('yc-theme')==='dark'
@@ -388,7 +398,7 @@ async function buildAll(){
   cam.forEach((g,i)=>$('#save-cam-'+i).onclick=()=>saveCam());
   sys.forEach((g,i)=>$('#save-sys-'+i).onclick=()=>saveSys());
   bindWm();
-  bindQr();
+  bindAp();
 }
 
 // ---- ZNAK WODNY (wgrywanie własnego BMP)
@@ -423,53 +433,39 @@ async function bindWm(){
     const j=await r.json().catch(()=>({}));
     toast(j&&j.error==='false'?'Zapisano znak wodny':'Zapisano (sprawdź status)', j&&j.error==='true');
   };
+}
 
-  // ---- WIFI QR: skanowanie kodu QR WiFi przez kamerke
-  let qrTimer=null, qrFound=null;
-  function qrMsg(m){$('#qrlog').innerHTML+=esc(m)+'<br>'}
-  function parseWifi(s){
-    const m=/^WIFI:T:([^;]*);S:([^;]*);P:([^;]*);/.exec(s||'');
-    return m?{t:m[1],ssid:m[2],psk:m[3]}:null;
-  }
-  async function qrOnce(){
-    try{
-      const b=await fetch(G+'snapshot.sh?res=low&base64=yes').then(r=>r.text());
-      const img=new Image();
-      await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src='data:image/jpeg;base64,'+b.trim()});
-      const c=$('#qrc');c.width=img.width;c.height=img.height;
-      const ctx=c.getContext('2d',{willReadFrequently:true});
-      ctx.drawImage(img,0,0);
-      $('#qrimg').src=c.toDataURL('image/jpeg',0.8);$('#qrimg').style.display='block';
-      const d=ctx.getImageData(0,0,c.width,c.height);
-      const r=jsQR(d.data,c.width,c.height);
-      if(r&&r.data){
-        const w=parseWifi(r.data);
-        if(w){qrFound=w;$('#qrssid').textContent=w.ssid+' ('+w.t+')';
-          $('#qrsave').disabled=false;qrMsg('odczytano: '+w.ssid);qrStop();return}
-        qrMsg('QR nie jest kodem WiFi: '+esc(r.data).slice(0,60));
-      }
-    }catch(e){qrMsg('blad klatki: '+e)}
-  }
-  function qrStop(){if(qrTimer){clearInterval(qrTimer);qrTimer=null}
-    $('#qrstop').disabled=true;$('#qrscan').disabled=false}
-  function bindQr(){
-    $('#qrscan').onclick=()=>{qrFound=null;$('#qrsave').disabled=true;$('#qrssid').textContent='—';
-      $('#qrlog').innerHTML='';qrMsg('skanuje co 2 s — pokaz kod kamerce…');
-      $('#qrscan').disabled=true;$('#qrstop').disabled=false;
-      qrOnce();qrTimer=setInterval(qrOnce,2000)};
-    $('#qrstop').onclick=()=>{qrStop();qrMsg('stop')};
-    $('#qrsave').onclick=async()=>{
-      if(!qrFound)return;
-      if(!confirm('Zapisać WiFi „'+qrFound.ssid+'” w kamerce? Kamerka zrestartuje się.'))return;
-      $('#qrsave').disabled=true;qrMsg('zapisuje do partycji conf…');
-      const r=await fetch(G+'wifi_qr.sh',{method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ssid:qrFound.ssid,psk:qrFound.psk})}).catch(()=>null);
+// ---- TRYB AP: wlacznik punktu dostepowego YI-CAM
+function bindAp(){
+  const st=$('#apstate'),ssid=$('#apssid'),pass=$('#appass'),log=$('#aplog');
+    const b1=$('#apstart'),b2=$('#apstop');
+    function msg(m){log.innerHTML+=esc(m)+'<br>'}
+    async function refresh(){
+      try{
+        const j=await jget('ap.sh?action=status');
+        st.textContent=(j.mode==='ap')?'WŁĄCZONY':'wyłączony (klient WiFi)';
+        ssid.textContent=j.ssid||'—';pass.textContent=j.pass||'—';
+        b1.disabled=(j.mode==='ap');b2.disabled=(j.mode!=='ap');
+      }catch(e){st.textContent='nie mogę sprawdzić statusu'}
+    }
+    b1.onclick=async()=>{
+      if(!confirm('Włączyć tryb AP? Kamera zerwie WiFi do głównej sieci — ten panel będzie nieosiągalny, dopóki nie połączysz się z siecią YI-CAM.'))return;
+      b1.disabled=true;msg('włączam AP…');
+      const r=await fetch(G+'ap.sh?action=start',{method:'POST'}).catch(()=>null);
       const j=r?await r.json().catch(()=>({error:'?'})):{error:'?'};
-      if(j.error==='false'){qrMsg('zapisano — kamerka zrestartuje się sama za chwilę. Po restarcie połącz się z nową siecią.');toast('WiFi zapisane, restart…')}
-      else{qrMsg('BŁĄD zapisu');toast('Błąd zapisu WiFi',1)}
+      if(j.error==='false'){msg('AP włączony: '+j.ssid+' / hasło: '+j.pass+' — połącz się i wejdź na http://192.168.4.1/');toast('AP włączony: '+j.ssid)}
+      else{msg('BŁĄD włączania AP');toast('Błąd AP',1)}
+      refresh();
     };
-  }
+    b2.onclick=async()=>{
+      b2.disabled=true;msg('wyłączam AP, wracam do WiFi…');
+      const r=await fetch(G+'ap.sh?action=stop',{method:'POST'}).catch(()=>null);
+      const j=r?await r.json().catch(()=>({error:'?'})):{error:'?'};
+      if(j.error==='false'){msg('wrócono do klienta WiFi');toast('AP wyłączony')}
+      else{msg('BŁĄD wyłączania AP');toast('Błąd',1)}
+      refresh();
+    };
+    refresh();
 }
 async function saveCam(){
   const q=(o,p)=>o[p];
