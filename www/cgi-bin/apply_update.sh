@@ -14,7 +14,7 @@ esac
 json() { printf "Content-type: application/json\r\n\r\n{\"error\":\"%s\"}\n" "$1"; }
 
 case "$FILE" in
-  index.html|live.html|VERSION|cgi-bin/apply_update.sh) ;;
+  index.html|live.html|VERSION|cgi-bin/apply_update.sh|cgi-bin/watermark.sh|cgi-bin/ap.sh) ;;
   *) json "true"; exit ;;
 esac
 

@@ -3,3 +3,4 @@ live.html
 VERSION
 cgi-bin/apply_update.sh
 cgi-bin/watermark.sh
+cgi-bin/ap.sh
