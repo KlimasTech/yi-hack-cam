@@ -149,7 +149,7 @@ footer a{color:var(--muted)}
 <section id="wifi">
   <div class="card"><h2>Tryb punktu dostępowego (AP)</h2>
     <p class="note" style="margin:0 0 8px">Kamera może rozgłosić własną sieć WiFi
-      <b>YI-CAM</b>, żeby połączyć się z nią bez dostępu do głównej sieci.
+      <b>YI-CAM</b> (sieć otwarta, bez hasła), żeby połączyć się z nią bez dostępu do głównej sieci.
       Przy starcie kamera sama włącza AP, jeśli nie połączy się z siecią w ciągu 60&nbsp;s.</p>
     <table>
       <tr><td>Stan</td><td id="apstate">—</td></tr>
@@ -444,7 +444,7 @@ function bindAp(){
       try{
         const j=await jget('ap.sh?action=status');
         st.textContent=(j.mode==='ap')?'WŁĄCZONY':'wyłączony (klient WiFi)';
-        ssid.textContent=j.ssid||'—';pass.textContent=j.pass||'—';
+        ssid.textContent=j.ssid||'—';pass.textContent=j.open?'brak (sieć otwarta)':(j.pass||'—');
         b1.disabled=(j.mode==='ap');b2.disabled=(j.mode!=='ap');
       }catch(e){st.textContent='nie mogę sprawdzić statusu'}
     }
@@ -453,7 +453,7 @@ function bindAp(){
       b1.disabled=true;msg('włączam AP…');
       const r=await fetch(G+'ap.sh?action=start',{method:'POST'}).catch(()=>null);
       const j=r?await r.json().catch(()=>({error:'?'})):{error:'?'};
-      if(j.error==='false'){msg('AP włączony: '+j.ssid+' / hasło: '+j.pass+' — połącz się i wejdź na http://192.168.4.1/');toast('AP włączony: '+j.ssid)}
+      if(j.error==='false'){msg('AP włączony: '+j.ssid+' (sieć otwarta, bez hasła) — połącz się i wejdź na http://192.168.4.1/');toast('AP włączony: '+j.ssid)}
       else{msg('BŁĄD włączania AP');toast('Błąd AP',1)}
       refresh();
     };

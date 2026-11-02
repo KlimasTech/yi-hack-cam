@@ -31,8 +31,9 @@ Wszystko przeżywa reboot (zmiany leżą na karcie SD). Powrót: `./scripts/unin
 
 ## Tryb punktu dostępowego (AP) — zakładka „Tryb AP”
 
-Kamera może rozgłosić własną sieć WiFi **`YI-CAM`** (hasło `yicamkoneksja`,
-zmień w `www/cgi-bin/ap.sh`), żeby skonfigurować ją bez dostępu do głównej
+Kamera może rozgłosić własną sieć WiFi **`YI-CAM`** (sieć otwarta, bez
+hasła — zmienisz to w `www/cgi-bin/ap.sh`), żeby skonfigurować ją bez dostępu
+do głównej
 sieci — panel wtedy pod `http://192.168.4.1/`. Włącza się ręcznie (przycisk
 w panelu) albo automatycznie, jeśli kamera nie złapie WiFi w ciągu 60 s po
 boocie.
